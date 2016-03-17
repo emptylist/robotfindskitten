@@ -7,6 +7,41 @@ Array.prototype.foreach = function (fn) {
   }
 }
 
+function shuffle (arr) {
+  // Durstenfeld version of Fisher-Yates shuffle
+  var res = arr.slice();
+  for (var i = res.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i+1));
+    var tmp = res[i];
+    res[i] = res[j];
+    res[j] = tmp;
+  }
+  return res;
+}
+
+function symbolSet () {
+  var symbols = ["@", "#", "$", "%", "&", "*", "?", "<", ">", "+", "="];
+  var colors = ["blue", "red", "green", "steelblue", "orange", "black", "purple"];
+
+  var combinations = [];
+  symbols.foreach(function (sym) {
+    colors.foreach(function (color) {
+      combinations.push([sym, color]);
+    })
+  });
+
+  return combinations;
+}
+
+var descriptionSet = [
+  "The smell of apple pie and flag pins.",
+  "The Artifice educational center.",
+  "Some scrap metal, looking bored.",
+  "I liked it a lot",
+  "Discount airline tickets -- guarenteed to land at your destination!",
+  "Bullets on tin."
+];
+
 function main() {
   var canvas = document.getElementById("canvas");
   var output = document.getElementById("output");
@@ -45,20 +80,28 @@ function App(canvas, output) {
 
   var ctx = canvas.getContext("2d");
 
-  function initialize () {
+  function generateEntities () {
+
+    var items = [];
+    var symbols = shuffle(symbolSet());
+    var descriptions = shuffle(descriptionSet);
+
+    for (var i = 0; i < Math.min(symbols.length, descriptions.length, 20); i++) {
+      var rx = Math.floor(Math.random() * (canvas.width - 20));
+      var ry = Math.floor(Math.random() * (canvas.height - 20));
+      items.push(new Item(symbols[i][0], symbols[i][1], descriptions[i], new Vector(rx, ry)));
+    }
+
     var entities = {
       robot: new Robot(new Vector(300, 300)),
       kitten: new Item('$', 'black', 'KITTEN!', new Vector(200, 20)),
-      items: [
-          new Item('@', 'orange', 'The Artifice educational center', new Vector(40, 40))
-        , new Item('+', 'green', 'The smell of apple pie and flag pins', new Vector(300, 200))
-      ]
+      items: items
     };
   
     return entities;
   };
 
-  var entities = initialize();
+  var entities = generateEntities();
 
   console.log(entities);
   var movingLeft = false;
@@ -82,7 +125,6 @@ function App(canvas, output) {
       entities.items.foreach(function (item) {
         if (item.did_collide(entities.robot)) {
           entities.robot.translate(velocity.mul(-1 * dt));
-          console.log(item.desc);
           output.innerHTML = item.desc;
         }
       });
